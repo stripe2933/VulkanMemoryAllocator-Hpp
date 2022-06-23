@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 /**
  * <b>Java 16+</b>
- * <pre>{@code java Generate.java}</pre>
+ * <pre>{@code java Generate.java <path/to/vk_mem_alloc.h>}</pre>
  */
 public class Generate {
 
@@ -800,7 +800,11 @@ public class Generate {
     }
 
     public static void main(String[] args) throws Exception {
-        String orig = Files.readString(Path.of("include/vk_mem_alloc.h"))
+        if (args.length != 1) {
+            System.err.println("Usage: java Generate.java <path/to/vk_mem_alloc.h>");
+            return;
+        }
+        String orig = Files.readString(Path.of(args[0]))
                 .replaceAll("/\\*[\\s\\S]*?\\*/", "") // Delete multi-line comments
                 .replaceAll("//.*", ""); // Delete single-line comments
         orig = orig.substring(0, orig.indexOf("#ifdef VMA_IMPLEMENTATION")); // Strip implementation part

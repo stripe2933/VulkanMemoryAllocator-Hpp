@@ -1,7 +1,10 @@
 #ifndef VULKAN_MEMORY_ALLOCATOR_HPP
 #define VULKAN_MEMORY_ALLOCATOR_HPP
 
-#include "vk_mem_alloc.h"
+#if !defined(AMD_VULKAN_MEMORY_ALLOCATOR_H)
+#include <vk_mem_alloc.h>
+#endif
+
 #include <vulkan/vulkan.hpp>
 
 #if !defined(VMA_HPP_NAMESPACE)

@@ -2,16 +2,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * <b>Java 16+</b>
  * <pre>{@code java Update.java vma_revision vk_hpp_revision}</pre>
- * Where {@code *_revision} is a <a href="https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator">VMA</a>
- * / <a href="https://github.com/KhronosGroup/Vulkan-Hpp">Vulkan-Hpp</a>
- * branch name or commit hash.
+ * Example: {@code java Update.java v3.0.1 master}
  */
 public class Update {
 
@@ -71,9 +68,7 @@ public class Update {
         exec("Vulkan-Hpp", "git", "checkout", args[1]);
         System.out.println();
 
-        Path vmaFile = Path.of("include/vk_mem_alloc.h");
-        Files.copy(Path.of("VulkanMemoryAllocator").resolve(vmaFile), vmaFile, StandardCopyOption.REPLACE_EXISTING);
-
+        Path vmaFile = Path.of("VulkanMemoryAllocator/include/vk_mem_alloc.h");
         String content = Files.readString(vmaFile);
         String version = findRegex(content, "<b>Version\\s*(.+?)\\s*</b>", "Cannot extract version");
         String vk = findVulkanVersion(content);
@@ -87,6 +82,6 @@ public class Update {
                 "VK", vk));
 
         System.out.println("Generating C++ bindings...");
-        exec(".", System.getProperty("java.home") + "/bin/java", "Generate.java");
+        exec(".", System.getProperty("java.home") + "/bin/java", "Generate.java", vmaFile.toString());
     }
 }
