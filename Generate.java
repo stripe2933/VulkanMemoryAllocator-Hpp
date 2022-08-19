@@ -3,10 +3,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.IntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -476,6 +473,9 @@ public class Generate {
         final boolean dispatchable;
         final StringBuilder declarations = new StringBuilder(), definitions = new StringBuilder();
         Ifdef.Range ifdef;
+        final Set<Handle> dependencies = new HashSet<>();
+        Handle owner = null;
+        boolean appended = false;
 
         Handle(String name, boolean dispatchable, Ifdef.Range ifdef) {
             this.name = name;
@@ -489,53 +489,81 @@ public class Generate {
 
         String generateClass() {
             return processTemplate("""
-                    class $0 {
-                    public:
-                      using CType      = Vma$0;
-                      using NativeType = Vma$0;
-                    public:
-                      VULKAN_HPP_CONSTEXPR         $0() = default;
-                      VULKAN_HPP_CONSTEXPR         $0(std::nullptr_t) VULKAN_HPP_NOEXCEPT {}
-                      VULKAN_HPP_TYPESAFE_EXPLICIT $0(Vma$0 $1) VULKAN_HPP_NOEXCEPT : m_$1($1) {}
-                    
-                    #if defined(VULKAN_HPP_TYPESAFE_CONVERSION)
-                      $0& operator=(Vma$0 $1) VULKAN_HPP_NOEXCEPT {
-                        m_$1 = $1;
-                        return *this;
-                      }
-                    #endif
-                    
-                      $0& operator=(std::nullptr_t) VULKAN_HPP_NOEXCEPT {
-                        m_$1 = {};
-                        return *this;
-                      }
-                    
-                    #if defined( VULKAN_HPP_HAS_SPACESHIP_OPERATOR )
-                      auto operator<=>($0 const &) const = default;
-                    #else
-                      bool operator==($0 const & rhs) const VULKAN_HPP_NOEXCEPT {
-                        return m_$1 == rhs.m_$1;
-                      }
-                    #endif
-                    
-                      VULKAN_HPP_TYPESAFE_EXPLICIT operator Vma$0() const VULKAN_HPP_NOEXCEPT {
-                        return m_$1;
-                      }
-                    
-                      explicit operator bool() const VULKAN_HPP_NOEXCEPT {
-                        return m_$1 != VK_NULL_HANDLE;
-                      }
-                    
-                      bool operator!() const VULKAN_HPP_NOEXCEPT {
-                        return m_$1 == VK_NULL_HANDLE;
-                      }
+                    namespace VMA_HPP_NAMESPACE {
+                      class $0 {
+                      public:
+                        using CType      = Vma$0;
+                        using NativeType = Vma$0;
+                      public:
+                        VULKAN_HPP_CONSTEXPR         $0() = default;
+                        VULKAN_HPP_CONSTEXPR         $0(std::nullptr_t) VULKAN_HPP_NOEXCEPT {}
+                        VULKAN_HPP_TYPESAFE_EXPLICIT $0(Vma$0 $1) VULKAN_HPP_NOEXCEPT : m_$1($1) {}
+                      
+                      #if defined(VULKAN_HPP_TYPESAFE_CONVERSION)
+                        $0& operator=(Vma$0 $1) VULKAN_HPP_NOEXCEPT {
+                          m_$1 = $1;
+                          return *this;
+                        }
+                      #endif
+                      
+                        $0& operator=(std::nullptr_t) VULKAN_HPP_NOEXCEPT {
+                          m_$1 = {};
+                          return *this;
+                        }
+                      
+                      #if defined( VULKAN_HPP_HAS_SPACESHIP_OPERATOR )
+                        auto operator<=>($0 const &) const = default;
+                      #else
+                        bool operator==($0 const & rhs) const VULKAN_HPP_NOEXCEPT {
+                          return m_$1 == rhs.m_$1;
+                        }
+                      #endif
+                      
+                        VULKAN_HPP_TYPESAFE_EXPLICIT operator Vma$0() const VULKAN_HPP_NOEXCEPT {
+                          return m_$1;
+                        }
+                      
+                        explicit operator bool() const VULKAN_HPP_NOEXCEPT {
+                          return m_$1 != VK_NULL_HANDLE;
+                        }
+                      
+                        bool operator!() const VULKAN_HPP_NOEXCEPT {
+                          return m_$1 == VK_NULL_HANDLE;
+                        }
                     $2
-                    private:
-                      Vma$0 m_$1 = {};
-                    };
-                    VULKAN_HPP_STATIC_ASSERT(sizeof($0) == sizeof(Vma$0),
-                                             "handle and wrapper have different size!");
-                    """, name, getLowerName(), declarations.toString().indent(2));
+                      private:
+                        Vma$0 m_$1 = {};
+                      };
+                      VULKAN_HPP_STATIC_ASSERT(sizeof($0) == sizeof(Vma$0),
+                                               "handle and wrapper have different size!");
+                    }
+                    #ifndef VULKAN_HPP_NO_SMART_HANDLE
+                    namespace VULKAN_HPP_NAMESPACE {
+                      template<> struct UniqueHandleTraits<VMA_HPP_NAMESPACE::$0, VMA_HPP_NAMESPACE::Dispatcher> {
+                        using deleter = VMA_HPP_NAMESPACE::Deleter<VMA_HPP_NAMESPACE::$0, $3>;
+                      };
+                    }
+                    namespace VMA_HPP_NAMESPACE { using Unique$0 = VULKAN_HPP_NAMESPACE::UniqueHandle<$0, Dispatcher>; }
+                    #endif
+                    """, name, getLowerName(), declarations.toString().indent(4),
+                    owner == null ? "void" : "VMA_HPP_NAMESPACE::" + owner.name);
+        }
+        String generateNamespace() {
+            return processTemplate("""
+                    namespace VMA_HPP_NAMESPACE {
+                    $0
+                    }
+                    """, declarations.toString().indent(2));
+        }
+
+        void append(StringBuilder declarations, StringBuilder definitions) {
+            if (appended) return;
+            for (Handle h : dependencies) h.append(declarations, definitions);
+            ifdef.goTo(this.declarations, -1);
+            ifdef.goTo(this.definitions, -1);
+            declarations.append("\n").append(name == null ? generateNamespace() : generateClass());
+            definitions.append(this.definitions);
+            appended = true;
         }
     }
 
@@ -548,12 +576,15 @@ public class Generate {
         }
     }
 
+    static Set<String> BLACKLISTED_UNIQUE_HANDLES = Set.of("DefragmentationContext"); // These handles will not have unique variants
+
     static void generateHandles(String orig, Ifdef.Range ifdef, List<String> structs) throws IOException {
         // Forward declarations for structs
-        StringBuilder declarations = new StringBuilder(), definitions = new StringBuilder();
-        for (String s : structs) declarations.append("\nstruct ").append(s).append(";");
+        StringBuilder forwardDeclarations = new StringBuilder(), declarations = new StringBuilder(), definitions = new StringBuilder();
+        for (String s : structs) forwardDeclarations.append("\nstruct ").append(s).append(";");
 
         // Find all handles
+        Handle namespaceHandle = new Handle(null, false, ifdef);
         Map<String, Handle> handles = new HashMap<>();
         Pattern handlePattern = Pattern.compile("VK_DEFINE_(NON_DISPATCHABLE_)?HANDLE\\s*\\(\\s*Vma(\\w+)\\s*\\)");
         Matcher handleMatcher = handlePattern.matcher(orig);
@@ -561,11 +592,12 @@ public class Generate {
             String name = handleMatcher.group(2);
             Handle h = new Handle(name, handleMatcher.group(1) == null, ifdef);
             handles.put("Vma" + name, h);
+            namespaceHandle.dependencies.add(h);
         }
 
         // Forward declarations for handles
-        declarations.append("\n\n");
-        for (Handle h : handles.values()) declarations.append("class ").append(h.name).append(";\n");
+        forwardDeclarations.append("\n\n");
+        for (Handle h : handles.values()) forwardDeclarations.append("class ").append(h.name).append(";\n");
 
         // Iterate VMA functions
         Pattern funcPattern = Pattern.compile("VMA_CALL_PRE\\s+(\\w+)\\s+VMA_CALL_POST\\s+vma(\\w+)\\s*(\\([\\s\\S]+?\\)\\s*;)");
@@ -575,15 +607,23 @@ public class Generate {
             List<Var> params = new ArrayList<>();
             while (paramMatcher.find()) params.add(Var.parse(paramMatcher));
             // Find dispatchable handle if any
-            Handle handle = handles.get(params.get(0).originalType);
-            if (handle != null) params.remove(0);
+            Handle handle = handles.getOrDefault(params.get(0).originalType, namespaceHandle);
+            if (handle != namespaceHandle) params.remove(0);
+
+            // Find handle dependencies
+            if (handle != namespaceHandle) {
+                for (Var p : params) {
+                    Handle h = handles.get(p.originalType);
+                    if (h != null && h != handle) handle.dependencies.add(h);
+                }
+            }
 
             Map<String, Integer> paramIndexByName = new HashMap<>();
             for (int i = 0; i < params.size(); i++) paramIndexByName.put(params.get(i).name, i);
 
             String name = funcMatcher.group(2);
             String funcName = "vma" + name; // Original function name
-            if (handle != null && name.equals("Destroy" + handle.name)) name = "destroy"; // E.g. Allocator::destroyAllocator -> Allocator::destroy
+            if (handle != namespaceHandle && name.equals("Destroy" + handle.name)) name = "destroy"; // E.g. Allocator::destroyAllocator -> Allocator::destroy
             String methodName = name.substring(0, 1).toLowerCase() + name.substring(1); // Generated method name
 
             // Find dependencies of array sizes
@@ -622,10 +662,11 @@ public class Generate {
                 final boolean enhanced;
                 final List<String> paramTypes = new ArrayList<>(), paramsPass = new ArrayList<>();
                 final List<Integer> paramIndices = new ArrayList<>();
+                boolean returnsHandles = false;
 
                 Method(boolean enhanced) {
                     this.enhanced = enhanced;
-                    if (handle != null) paramsPass.add("m_" + handle.getLowerName());
+                    if (handle != namespaceHandle) paramsPass.add("m_" + handle.getLowerName());
                     for (int i = 0; i < params.size(); i++) {
                         Var p = params.get(i);
 
@@ -643,7 +684,15 @@ public class Generate {
                         paramsPass.add(v);
 
                         if (enhanced) {
-                            if (outputs.contains(i)) continue; // Skip output parameters
+                            if (outputs.contains(i)) {
+                                String n = params.get(i).stripPtr();
+                                Handle h = handles.get("Vma" + n);
+                                if (h != null && !BLACKLISTED_UNIQUE_HANDLES.contains(n)) {
+                                    if (handle != namespaceHandle) h.owner = handle;
+                                    returnsHandles = true;
+                                }
+                                continue; // Skip output parameters
+                            }
                             if (arrayByLengthIndex[i] != null) continue; // Skip length parameters which can be deduced
                         }
 
@@ -658,27 +707,40 @@ public class Generate {
                     }
                 }
 
-                String generate(boolean definition, boolean customVectorAllocator) {
+                String returnType(int i, boolean uniqueHandle) {
+                    String t = params.get(outputs.get(i)).stripPtr();
+                    if (uniqueHandle) {
+                        if (t.startsWith("VULKAN_HPP_NAMESPACE::")) t = t.substring(22); // We use our own unique handles for Vulkan types
+                        t = "Unique" + t;
+                    }
+                    return t;
+                }
+                String returnType(boolean uniqueHandle, boolean noVectorAllocator) {
+                    return enhanced ? switch (outputs.size()) {
+                        case 2 -> "std::pair<" + returnType(0, uniqueHandle) + ", " + returnType(1, uniqueHandle) + ">";
+                        case 1 -> params.get(outputs.get(0)).lenIfNotNull != null ? "std::vector<" + returnType(0, uniqueHandle) + (noVectorAllocator ? "" : ", VectorAllocator") + ">" : returnType(0, uniqueHandle);
+                        default -> returnType.equals("VULKAN_HPP_NAMESPACE::Result") ? "void" : returnType;
+                    } : returnType;
+                }
+                String returnType(boolean uniqueHandle) { return returnType(uniqueHandle, false); }
+
+                String generate(boolean definition, boolean uniqueHandle, boolean customVectorAllocator) {
                     if (outputs.size() >= 3) throw new Error("3+ mandatory outputs");
                     if (outputs.size() != 0 && !returnType.equals("void") && !returnType.equals("VULKAN_HPP_NAMESPACE::Result")) throw new Error("Both return value and output parameters");
                     if (outputs.size() >= 2 && params.get(outputs.get(0)).lenIfNotNull != null) throw new Error("2+ mandatory outputs with at least one array");
-                    String ret = enhanced ? switch (outputs.size()) {
-                        case 2 -> "std::pair<" + params.get(outputs.get(0)).stripPtr() + ", " + params.get(outputs.get(1)).stripPtr() + ">";
-                        case 1 -> params.get(outputs.get(0)).lenIfNotNull != null ? "std::vector<" + params.get(outputs.get(0)).stripPtr() + ", VectorAllocator>" : params.get(outputs.get(0)).stripPtr();
-                        default -> returnType.equals("VULKAN_HPP_NAMESPACE::Result") ? "void" : returnType;
-                    } : returnType;
+                    String ret = returnType(false);
 
                     String decl = "";
                     // Generate template for vector allocator
                     if (enhanced && outputs.size() == 1 && params.get(outputs.get(0)).lenIfNotNull != null) {
-                        if (!customVectorAllocator) decl = generate(definition, true) + "\n";
+                        if (!customVectorAllocator) decl = generate(definition, uniqueHandle, true) + "\n";
                         decl += "template<typename VectorAllocator";
-                        if (!definition) decl += " = std::allocator<" + params.get(outputs.get(0)).stripPtr() + ">";
+                        if (!definition) decl += " = std::allocator<" + returnType(0, uniqueHandle) + ">";
                         if (customVectorAllocator) {
                             decl += ",\n         typename B";
                             if (!definition) decl += " = VectorAllocator";
                             decl += ",\n         typename std::enable_if<std::is_same<typename B::value_type, " +
-                                    params.get(outputs.get(0)).stripPtr() + ">::value, int>::type";
+                                    returnType(0, uniqueHandle) + ">::value, int>::type";
                             if (!definition) decl += " = 0";
                         }
                         decl += ">\n";
@@ -686,8 +748,8 @@ public class Generate {
 
                     if (definition) decl += "VULKAN_HPP_INLINE ";
                     else if (!ret.equals("void")) decl += enhanced ? "VULKAN_HPP_NODISCARD_WHEN_NO_EXCEPTIONS " : "VULKAN_HPP_NODISCARD ";
-                    decl += (enhanced && returnType.equals("VULKAN_HPP_NAMESPACE::Result") ? "typename VULKAN_HPP_NAMESPACE::ResultValueType<" + ret + ">::type" : ret) + " ";
-                    if (definition && handle != null) decl += handle.name + "::";
+                    decl += (enhanced && returnType.equals("VULKAN_HPP_NAMESPACE::Result") ? "typename VULKAN_HPP_NAMESPACE::ResultValueType<" + returnType(uniqueHandle) + ">::type" : returnType(uniqueHandle)) + " ";
+                    if (definition && handle != namespaceHandle) decl += handle.name + "::";
                     StringBuilder s = new StringBuilder();
                     for (int i = 0; i < paramTypes.size(); i++) {
                         if (i != 0) s.append(",\n");
@@ -698,7 +760,7 @@ public class Generate {
                         if (!paramTypes.isEmpty()) s.append(",\n");
                         s.append("VectorAllocator& vectorAllocator");
                     }
-                    decl = processTemplate("$0$1($2)$3", decl, methodName, s.toString(), handle != null ? " const" : "");
+                    decl = processTemplate("$0$1($2)$3", decl, methodName + (uniqueHandle ? "Unique" : ""), s.toString(), handle != namespaceHandle ? " const" : "");
                     if (!definition) return decl + ";\n";
 
                     s.setLength(0);
@@ -717,10 +779,10 @@ public class Generate {
                                     .append(p2.stripPtr()).append("& ").append(p2.prettyName()).append(" = pair.second;\n");
                         } else if (outputs.size() == 1) {
                             Var p = params.get(outputs.get(0));
-                            s.append(ret).append(" ").append(p.prettyName());
+                            s.append(returnType(false, uniqueHandle)).append(" ").append(p.prettyName());
                             if (p.lenIfNotNull != null) {
                                 s.append("(").append(paramIndexByName.get(p.lenIfNotNull) != null ?
-                                        p.lenIfNotNull : deduceVectorSize(funcName, p.lenIfNotNull)).append(customVectorAllocator ? ", vectorAllocator)" : ")");
+                                        p.lenIfNotNull : deduceVectorSize(funcName, p.lenIfNotNull)).append(customVectorAllocator && !uniqueHandle ? ", vectorAllocator)" : ")");
                             }
                             s.append(";\n");
                         }
@@ -736,11 +798,22 @@ public class Generate {
                         case 1 -> params.get(outputs.get(0)).prettyName();
                         default -> "result";
                     } :  "result";
-                    if (enhanced && returnType.equals("VULKAN_HPP_NAMESPACE::Result")) { // Check result
+                    if (enhanced && returnType.equals("VULKAN_HPP_NAMESPACE::Result")) {
+                        // Check result
+                        if (uniqueHandle) {
+                            if (params.get(outputs.get(0)).lenIfNotNull != null) {
+                                returnValue = "createUniqueHandleVector(" + returnValue +
+                                        (handle != namespaceHandle ? ", this" : "") +
+                                        (customVectorAllocator ? ", vectorAllocator)" : ", VectorAllocator())");
+                            } else {
+                                returnValue = "createUniqueHandle(" + returnValue +
+                                        (handle != namespaceHandle ? ", this)" : ")");
+                            }
+                        }
                         if (ret.equals("void")) returnValue = "result";
                         else returnValue = "result, " + returnValue;
                         s.append("\nresultCheck(result, VMA_HPP_NAMESPACE_STRING \"::");
-                        if (handle != null) s.append(handle.name).append("::");
+                        if (handle != namespaceHandle) s.append(handle.name).append("::");
                         s.append(methodName).append("\");\nreturn createResultValueType(").append(returnValue).append(");");
                     } else if (!ret.equals("void")) s.append("\nreturn ").append(returnValue).append(";");
                     return processTemplate("""
@@ -752,41 +825,38 @@ public class Generate {
             }
             Method simple = new Method(false), enhanced = new Method(true);
 
-            StringBuilder defs = handle != null ? handle.definitions : definitions, decls = handle != null ? handle.declarations : declarations;
             boolean sameSignatures = simple.paramTypes.equals(enhanced.paramTypes);
 
-            (handle != null ? handle.ifdef : ifdef).goTo(decls, funcMatcher.start());
-            if (handle != null) handle.ifdef = handle.ifdef.goTo(defs, funcMatcher.start());
-            else ifdef = ifdef.goTo(defs, funcMatcher.start());
+            handle.ifdef.goTo(handle.declarations, funcMatcher.start());
+            handle.ifdef = handle.ifdef.goTo(handle.definitions, funcMatcher.start());
 
-            decls.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(false, false));
-            defs.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(true, false));
-            decls.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(false, false));
-            defs.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(true, false));
+            handle.declarations.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(false, false, false));
+            handle.definitions.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(true, false, false));
+            if (enhanced.returnsHandles) {
+                handle.declarations.append("#ifndef VULKAN_HPP_NO_SMART_HANDLE\n").append(enhanced.generate(false, true, false)).append("#endif\n");
+                handle.definitions.append("#ifndef VULKAN_HPP_NO_SMART_HANDLE\n").append(enhanced.generate(true, true, false)).append("#endif\n");
+            }
+            handle.declarations.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(false, false, false));
+            handle.definitions.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(true, false, false));
             if (sameSignatures) {
-                decls.append("#endif\n");
-                defs.append("#endif\n");
+                handle.declarations.append("#endif\n");
+                handle.definitions.append("#endif\n");
             }
         }
 
-        for (Handle h : handles.values()) {
-            h.ifdef.goTo(h.declarations, -1);
-            h.ifdef.goTo(h.definitions, -1);
-            declarations.append("\n").append(h.generateClass());
-            definitions.append(h.definitions);
-        }
-        ifdef.goTo(declarations, -1);
-        ifdef.goTo(definitions, -1);
+        namespaceHandle.append(declarations, definitions);
 
         Files.writeString(Path.of("include/vk_mem_alloc_handles.hpp"), processTemplate("""
                 #ifndef VULKAN_MEMORY_ALLOCATOR_HANDLES_HPP
                 #define VULKAN_MEMORY_ALLOCATOR_HANDLES_HPP
-
+                
                 namespace VMA_HPP_NAMESPACE {
                   $0
                 }
+
+                $1
                 #endif
-                """, declarations.toString()));
+                """, forwardDeclarations.toString(), declarations.toString()));
 
         Files.writeString(Path.of("include/vk_mem_alloc_funcs.hpp"), processTemplate("""
                 #ifndef VULKAN_MEMORY_ALLOCATOR_FUNCS_HPP
