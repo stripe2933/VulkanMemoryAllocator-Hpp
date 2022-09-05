@@ -88,6 +88,45 @@ namespace VMA_HPP_NAMESPACE {
   VMA_HPP_DESTROY_IMPL(VirtualAllocation) { owner->virtualFree(t); }
 
 # undef VMA_HPP_DESTROY_IMPL
+
+  template<class InstanceDispatcher, class DeviceDispatcher>
+  VULKAN_HPP_CONSTEXPR VulkanFunctions functionsFromDispatcher(InstanceDispatcher const * instance,
+                                                               DeviceDispatcher const * device) VULKAN_HPP_NOEXCEPT {
+    return VulkanFunctions {
+            instance->vkGetInstanceProcAddr,
+            instance->vkGetDeviceProcAddr,
+            instance->vkGetPhysicalDeviceProperties,
+            instance->vkGetPhysicalDeviceMemoryProperties,
+            device->vkAllocateMemory,
+            device->vkFreeMemory,
+            device->vkMapMemory,
+            device->vkUnmapMemory,
+            device->vkFlushMappedMemoryRanges,
+            device->vkInvalidateMappedMemoryRanges,
+            device->vkBindBufferMemory,
+            device->vkBindImageMemory,
+            device->vkGetBufferMemoryRequirements,
+            device->vkGetImageMemoryRequirements,
+            device->vkCreateBuffer,
+            device->vkDestroyBuffer,
+            device->vkCreateImage,
+            device->vkDestroyImage,
+            device->vkCmdCopyBuffer,
+            device->vkGetBufferMemoryRequirements2KHR ? device->vkGetBufferMemoryRequirements2KHR : device->vkGetBufferMemoryRequirements2,
+            device->vkGetImageMemoryRequirements2KHR ? device->vkGetImageMemoryRequirements2KHR : device->vkGetImageMemoryRequirements2,
+            device->vkBindBufferMemory2KHR ? device->vkBindBufferMemory2KHR : device->vkBindBufferMemory2,
+            device->vkBindImageMemory2KHR ? device->vkBindImageMemory2KHR : device->vkBindImageMemory2,
+            instance->vkGetPhysicalDeviceMemoryProperties2KHR ? instance->vkGetPhysicalDeviceMemoryProperties2KHR : instance->vkGetPhysicalDeviceMemoryProperties2,
+            device->vkGetDeviceBufferMemoryRequirements,
+            device->vkGetDeviceImageMemoryRequirements
+    };
+  }
+
+  template<class Dispatch = VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>
+  VULKAN_HPP_CONSTEXPR VulkanFunctions functionsFromDispatcher(Dispatch const & dispatch
+    VULKAN_HPP_DEFAULT_DISPATCHER_ASSIGNMENT) VULKAN_HPP_NOEXCEPT {
+    return functionsFromDispatcher(&dispatch, &dispatch);
+  }
 }
 
 #endif
