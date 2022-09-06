@@ -79,7 +79,7 @@ namespace VMA_HPP_NAMESPACE {
 
 namespace VMA_HPP_NAMESPACE {
 # define VMA_HPP_DESTROY_IMPL(NAME) \
-  template<> void VULKAN_HPP_NAMESPACE::UniqueHandleTraits<NAME, Dispatcher>::deleter::destroy(const NAME& t) VULKAN_HPP_NOEXCEPT
+  template<> VULKAN_HPP_INLINE void VULKAN_HPP_NAMESPACE::UniqueHandleTraits<NAME, Dispatcher>::deleter::destroy(const NAME& t) VULKAN_HPP_NOEXCEPT
 
   VMA_HPP_DESTROY_IMPL(VULKAN_HPP_NAMESPACE::Buffer) { owner->destroyBuffer(t, nullptr); }
   VMA_HPP_DESTROY_IMPL(VULKAN_HPP_NAMESPACE::Image) { owner->destroyImage(t, nullptr); }
