@@ -253,10 +253,9 @@ public class Generate {
                         
                         namespace VULKAN_HPP_NAMESPACE {
                           template<> struct FlagTraits<VMA_HPP_NAMESPACE::$0> {
-                            enum : VkFlags {
-                              allFlags =
-                                {{{${ ^|} VkFlags(VMA_HPP_NAMESPACE::$0::e${name})}}}
-                            };
+                            static VULKAN_HPP_CONST_OR_CONSTEXPR bool isBitmask = true;
+                            static VULKAN_HPP_CONST_OR_CONSTEXPR Flags<VMA_HPP_NAMESPACE::$0> allFlags =
+                              {{{${ ^|} VMA_HPP_NAMESPACE::$0::e${name}${$;}}}}
                           };
                         }
                         
