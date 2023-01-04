@@ -8,7 +8,7 @@ project(
 
 find_package(Vulkan REQUIRED)
 
-if(EXISTS VulkanMemoryAllocator/CMakeLists.txt)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/VulkanMemoryAllocator/CMakeLists.txt)
     add_subdirectory(VulkanMemoryAllocator)
 else()
     find_package(VulkanMemoryAllocator REQUIRED)
