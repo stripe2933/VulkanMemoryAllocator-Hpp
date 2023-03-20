@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 /**
  * <b>Java 16+</b>
  * <pre>{@code java Update.java vma_revision vk_hpp_revision}</pre>
- * Example: {@code java Update.java v3.0.1 master}
+ * Example: {@code java Update.java v3.0.1 main}
  */
 public class Update {
 
