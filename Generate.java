@@ -472,7 +472,7 @@ public class Generate {
         final boolean dispatchable;
         final StringBuilder declarations = new StringBuilder(), definitions = new StringBuilder();
         Ifdef.Range ifdef;
-        final Set<Handle> dependencies = new HashSet<>();
+        final Set<Handle> dependencies = new LinkedHashSet<>();
         Handle owner = null;
         boolean appended = false;
 
@@ -584,7 +584,7 @@ public class Generate {
 
         // Find all handles
         Handle namespaceHandle = new Handle(null, false, ifdef);
-        Map<String, Handle> handles = new HashMap<>();
+        Map<String, Handle> handles = new LinkedHashMap<>();
         Pattern handlePattern = Pattern.compile("VK_DEFINE_(NON_DISPATCHABLE_)?HANDLE\\s*\\(\\s*Vma(\\w+)\\s*\\)");
         Matcher handleMatcher = handlePattern.matcher(orig);
         while (handleMatcher.find()) {
