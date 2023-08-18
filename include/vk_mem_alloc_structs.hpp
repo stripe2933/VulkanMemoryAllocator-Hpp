@@ -1082,7 +1082,6 @@ namespace VMA_HPP_NAMESPACE {
         , size_t maxBlockCount_ = {}
         , float priority_ = {}
         , VULKAN_HPP_NAMESPACE::DeviceSize minAllocationAlignment_ = {}
-        , void* pMemoryAllocateNext_ = {}
       ) VULKAN_HPP_NOEXCEPT
       : memoryTypeIndex(memoryTypeIndex_)
       , flags(flags_)
@@ -1091,7 +1090,6 @@ namespace VMA_HPP_NAMESPACE {
       , maxBlockCount(maxBlockCount_)
       , priority(priority_)
       , minAllocationAlignment(minAllocationAlignment_)
-      , pMemoryAllocateNext(pMemoryAllocateNext_)
       {}
 
     VULKAN_HPP_CONSTEXPR PoolCreateInfo(PoolCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1123,7 +1121,6 @@ namespace VMA_HPP_NAMESPACE {
           && maxBlockCount == rhs.maxBlockCount
           && priority == rhs.priority
           && minAllocationAlignment == rhs.minAllocationAlignment
-          && pMemoryAllocateNext == rhs.pMemoryAllocateNext
       ;
     }
 #endif
@@ -1164,11 +1161,6 @@ namespace VMA_HPP_NAMESPACE {
       minAllocationAlignment = minAllocationAlignment_;
       return *this;
     }
-
-    VULKAN_HPP_CONSTEXPR_14 PoolCreateInfo& setPMemoryAllocateNext(void* pMemoryAllocateNext_) VULKAN_HPP_NOEXCEPT {
-      pMemoryAllocateNext = pMemoryAllocateNext_;
-      return *this;
-    }
 #endif
 
   public:
@@ -1179,7 +1171,6 @@ namespace VMA_HPP_NAMESPACE {
     size_t maxBlockCount = {};
     float priority = {};
     VULKAN_HPP_NAMESPACE::DeviceSize minAllocationAlignment = {};
-    void* pMemoryAllocateNext = {};
   };
   VULKAN_HPP_STATIC_ASSERT(sizeof(PoolCreateInfo) == sizeof(VmaPoolCreateInfo),
                            "struct and wrapper have different size!");
@@ -1306,11 +1297,15 @@ namespace VMA_HPP_NAMESPACE {
         , Pool pool_ = {}
         , VULKAN_HPP_NAMESPACE::DeviceSize maxBytesPerPass_ = {}
         , uint32_t maxAllocationsPerPass_ = {}
+        , PFN_vmaCheckDefragmentationBreakFunction pfnBreakCallback_ = {}
+        , void* pBreakCallbackUserData_ = {}
       ) VULKAN_HPP_NOEXCEPT
       : flags(flags_)
       , pool(pool_)
       , maxBytesPerPass(maxBytesPerPass_)
       , maxAllocationsPerPass(maxAllocationsPerPass_)
+      , pfnBreakCallback(pfnBreakCallback_)
+      , pBreakCallbackUserData(pBreakCallbackUserData_)
       {}
 
     VULKAN_HPP_CONSTEXPR DefragmentationInfo(DefragmentationInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1339,6 +1334,8 @@ namespace VMA_HPP_NAMESPACE {
           && pool == rhs.pool
           && maxBytesPerPass == rhs.maxBytesPerPass
           && maxAllocationsPerPass == rhs.maxAllocationsPerPass
+          && pfnBreakCallback == rhs.pfnBreakCallback
+          && pBreakCallbackUserData == rhs.pBreakCallbackUserData
       ;
     }
 #endif
@@ -1364,6 +1361,16 @@ namespace VMA_HPP_NAMESPACE {
       maxAllocationsPerPass = maxAllocationsPerPass_;
       return *this;
     }
+
+    VULKAN_HPP_CONSTEXPR_14 DefragmentationInfo& setPfnBreakCallback(PFN_vmaCheckDefragmentationBreakFunction pfnBreakCallback_) VULKAN_HPP_NOEXCEPT {
+      pfnBreakCallback = pfnBreakCallback_;
+      return *this;
+    }
+
+    VULKAN_HPP_CONSTEXPR_14 DefragmentationInfo& setPBreakCallbackUserData(void* pBreakCallbackUserData_) VULKAN_HPP_NOEXCEPT {
+      pBreakCallbackUserData = pBreakCallbackUserData_;
+      return *this;
+    }
 #endif
 
   public:
@@ -1371,6 +1378,8 @@ namespace VMA_HPP_NAMESPACE {
     Pool pool = {};
     VULKAN_HPP_NAMESPACE::DeviceSize maxBytesPerPass = {};
     uint32_t maxAllocationsPerPass = {};
+    PFN_vmaCheckDefragmentationBreakFunction pfnBreakCallback = {};
+    void* pBreakCallbackUserData = {};
   };
   VULKAN_HPP_STATIC_ASSERT(sizeof(DefragmentationInfo) == sizeof(VmaDefragmentationInfo),
                            "struct and wrapper have different size!");

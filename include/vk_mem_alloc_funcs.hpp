@@ -633,18 +633,16 @@ namespace VMA_HPP_NAMESPACE {
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
   VULKAN_HPP_INLINE typename VULKAN_HPP_NAMESPACE::ResultValueType<void>::type Allocator::bindBufferMemory2(Allocation allocation,
                                                                                                             VULKAN_HPP_NAMESPACE::DeviceSize allocationLocalOffset,
-                                                                                                            VULKAN_HPP_NAMESPACE::Buffer buffer,
-                                                                                                            const void* next) const {
-    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaBindBufferMemory2(m_allocator, static_cast<VmaAllocation>(allocation), static_cast<VkDeviceSize>(allocationLocalOffset), static_cast<VkBuffer>(buffer), next) );
+                                                                                                            VULKAN_HPP_NAMESPACE::Buffer buffer) const {
+    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaBindBufferMemory2(m_allocator, static_cast<VmaAllocation>(allocation), static_cast<VkDeviceSize>(allocationLocalOffset), static_cast<VkBuffer>(buffer)) );
     resultCheck(result, VMA_HPP_NAMESPACE_STRING "::Allocator::bindBufferMemory2");
     return createResultValueType(result);
   }
 #else
   VULKAN_HPP_INLINE VULKAN_HPP_NAMESPACE::Result Allocator::bindBufferMemory2(Allocation allocation,
                                                                               VULKAN_HPP_NAMESPACE::DeviceSize allocationLocalOffset,
-                                                                              VULKAN_HPP_NAMESPACE::Buffer buffer,
-                                                                              const void* next) const {
-    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaBindBufferMemory2(m_allocator, static_cast<VmaAllocation>(allocation), static_cast<VkDeviceSize>(allocationLocalOffset), static_cast<VkBuffer>(buffer), next) );
+                                                                              VULKAN_HPP_NAMESPACE::Buffer buffer) const {
+    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaBindBufferMemory2(m_allocator, static_cast<VmaAllocation>(allocation), static_cast<VkDeviceSize>(allocationLocalOffset), static_cast<VkBuffer>(buffer)) );
     return result;
   }
 #endif
@@ -667,18 +665,16 @@ namespace VMA_HPP_NAMESPACE {
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
   VULKAN_HPP_INLINE typename VULKAN_HPP_NAMESPACE::ResultValueType<void>::type Allocator::bindImageMemory2(Allocation allocation,
                                                                                                            VULKAN_HPP_NAMESPACE::DeviceSize allocationLocalOffset,
-                                                                                                           VULKAN_HPP_NAMESPACE::Image image,
-                                                                                                           const void* next) const {
-    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaBindImageMemory2(m_allocator, static_cast<VmaAllocation>(allocation), static_cast<VkDeviceSize>(allocationLocalOffset), static_cast<VkImage>(image), next) );
+                                                                                                           VULKAN_HPP_NAMESPACE::Image image) const {
+    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaBindImageMemory2(m_allocator, static_cast<VmaAllocation>(allocation), static_cast<VkDeviceSize>(allocationLocalOffset), static_cast<VkImage>(image)) );
     resultCheck(result, VMA_HPP_NAMESPACE_STRING "::Allocator::bindImageMemory2");
     return createResultValueType(result);
   }
 #else
   VULKAN_HPP_INLINE VULKAN_HPP_NAMESPACE::Result Allocator::bindImageMemory2(Allocation allocation,
                                                                              VULKAN_HPP_NAMESPACE::DeviceSize allocationLocalOffset,
-                                                                             VULKAN_HPP_NAMESPACE::Image image,
-                                                                             const void* next) const {
-    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaBindImageMemory2(m_allocator, static_cast<VmaAllocation>(allocation), static_cast<VkDeviceSize>(allocationLocalOffset), static_cast<VkImage>(image), next) );
+                                                                             VULKAN_HPP_NAMESPACE::Image image) const {
+    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaBindImageMemory2(m_allocator, static_cast<VmaAllocation>(allocation), static_cast<VkDeviceSize>(allocationLocalOffset), static_cast<VkImage>(image)) );
     return result;
   }
 #endif

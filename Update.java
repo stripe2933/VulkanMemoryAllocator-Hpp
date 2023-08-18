@@ -61,11 +61,15 @@ public class Update {
         }
 
         System.out.println("Updating VulkanMemoryAllocator...");
-        exec("VulkanMemoryAllocator", "git", "checkout", args[0]);
+        exec("VulkanMemoryAllocator", "git", "fetch");
+        exec("VulkanMemoryAllocator", "git", "-c", "advice.detachedHead=false",
+                "checkout", "origin/" + args[0]);
         System.out.println();
 
         System.out.println("Updating Vulkan-Hpp...");
-        exec("Vulkan-Hpp", "git", "checkout", args[1]);
+        exec("Vulkan-Hpp", "git", "fetch");
+        exec("Vulkan-Hpp", "git", "-c", "advice.detachedHead=false",
+                "checkout", "origin/" + args[1]);
         System.out.println();
 
         Path vmaFile = Path.of("VulkanMemoryAllocator/include/vk_mem_alloc.h");
