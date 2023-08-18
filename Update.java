@@ -12,13 +12,19 @@ import java.util.regex.Pattern;
  */
 public class Update {
 
-    private static void exec(String directory, String... command) throws IOException, InterruptedException {
+    private static void exec(boolean ignoreErrors, String directory, String... command) throws IOException, InterruptedException {
         ProcessBuilder generator = new ProcessBuilder(command);
         generator.directory(new File(directory));
         generator.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        generator.redirectError(ProcessBuilder.Redirect.INHERIT);
+        generator.redirectError(ignoreErrors ? ProcessBuilder.Redirect.DISCARD : ProcessBuilder.Redirect.INHERIT);
         int code = generator.start().waitFor();
-        if (code != 0) System.exit(code);
+        if (code != 0 && !ignoreErrors) System.exit(code);
+    }
+    private static void exec(String directory, String... command) throws IOException, InterruptedException {
+        exec(false, directory, command);
+    }
+    private static void execIgnoringErrors(String directory, String... command) throws IOException, InterruptedException {
+        exec(true, directory, command);
     }
 
     private static String findRegex(String text, String regex, String errorMessage) {
@@ -61,15 +67,13 @@ public class Update {
         }
 
         System.out.println("Updating VulkanMemoryAllocator...");
-        exec("VulkanMemoryAllocator", "git", "fetch");
-        exec("VulkanMemoryAllocator", "git", "-c", "advice.detachedHead=false",
-                "checkout", "origin/" + args[0]);
+        exec("VulkanMemoryAllocator", "git", "-c", "advice.detachedHead=false", "checkout", args[0]);
+        execIgnoringErrors("VulkanMemoryAllocator", "git", "pull");
         System.out.println();
 
         System.out.println("Updating Vulkan-Hpp...");
-        exec("Vulkan-Hpp", "git", "fetch");
-        exec("Vulkan-Hpp", "git", "-c", "advice.detachedHead=false",
-                "checkout", "origin/" + args[1]);
+        exec("Vulkan-Hpp", "git", "-c", "advice.detachedHead=false", "checkout", args[1]);
+        execIgnoringErrors("Vulkan-Hpp", "git", "pull");
         System.out.println();
 
         Path vmaFile = Path.of("VulkanMemoryAllocator/include/vk_mem_alloc.h");
