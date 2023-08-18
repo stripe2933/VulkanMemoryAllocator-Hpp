@@ -327,7 +327,7 @@ public class Generate {
                 "((?:\\s*\\[\\w+])+)?" +
                 "\\s*[;,)]");
         private static String applyConstAndPointers(String type, boolean constant, boolean pointer1, boolean pointer2) {
-            if (constant) type = "const " + type;
+            if (constant && (pointer1 || pointer2)) type = "const " + type;
             if (pointer1) type += "*";
             if (pointer2) type += "*";
             return type;

@@ -447,9 +447,9 @@ namespace VMA_HPP_NAMESPACE {
                                                                              AllocationInfo* allocationInfo) const;
 
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
-    void freeMemory(const Allocation allocation) const;
+    void freeMemory(Allocation allocation) const;
 #else
-    void freeMemory(const Allocation allocation) const;
+    void freeMemory(Allocation allocation) const;
 #endif
 
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
