@@ -242,10 +242,12 @@ public class Generate {
                         {{{e${name} = ${originalName}${,$}}}}
                       };
                     
+                    # if !defined( VULKAN_HPP_NO_TO_STRING )
                       VULKAN_HPP_INLINE std::string to_string($0 value) {
                         {{{if (value == $0::e${name}) return "${name}";}}}
                         return "invalid ( " + VULKAN_HPP_NAMESPACE::toHexString(static_cast<uint32_t>(value)) + " )";
                       }
+                    # endif
                     }
                     """, entries, name, flagBits ? (" : Vma" + flags) : ""));
             if (flagBits) {
@@ -279,12 +281,14 @@ public class Generate {
                             return ~($1(bits));
                           }
                         
+                        # if !defined( VULKAN_HPP_NO_TO_STRING )
                           VULKAN_HPP_INLINE std::string to_string($1 value) {
                             if (!value) return "{}";
                             std::string result;
                             {{{if (value & $0::e${name}) result += "${name} | ";}}}
                             return "{ " + result.substr( 0, result.size() - 3 ) + " }";
                           }
+                        # endif
                         }
                         """, entries, name, flags));
             }
