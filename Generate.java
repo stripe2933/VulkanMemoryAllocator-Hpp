@@ -207,7 +207,8 @@ public class Generate {
         return processTemplate(content.toString(), replacementStrings);
     }
 
-    static void generateEnums(String orig, Ifdef.Range ifdef) throws IOException {
+    static List<String> generateEnums(String orig, Ifdef.Range ifdef) throws IOException {
+        List<String> enums = new ArrayList<>();
         record Entry(String name, String originalName) {}
         StringBuilder content = new StringBuilder();
         Pattern typedefPattern = Pattern.compile("typedef\\s+enum\\s+Vma(\\w+)");
@@ -217,6 +218,8 @@ public class Generate {
             String name = typedefMatcher.group(1);
             boolean flagBits = name.endsWith("FlagBits");
             String flags = flagBits ? name.substring(0, name.length() - 4) + "s" : null;
+            enums.add(name);
+            if (flagBits) enums.add(flags);
 
             String body = orig.substring(typedefMatcher.end(), orig.indexOf("}", typedefMatcher.end()));
             Matcher entryMatcher = entryPattern.matcher(body);
@@ -300,6 +303,7 @@ public class Generate {
                 
                 #endif
                 """, content.toString()));
+        return enums;
     }
 
     enum VarTag {
@@ -482,6 +486,7 @@ public class Generate {
         final StringBuilder declarations = new StringBuilder(), definitions = new StringBuilder();
         Ifdef.Range ifdef;
         final Set<Handle> dependencies = new LinkedHashSet<>();
+        final Set<String> methods = new LinkedHashSet<>();
         Handle owner = null;
         boolean appended = false;
 
@@ -587,7 +592,7 @@ public class Generate {
 
     static Set<String> BLACKLISTED_UNIQUE_HANDLES = Set.of("DefragmentationContext"); // These handles will not have unique variants
 
-    static void generateHandles(String orig, Ifdef.Range ifdef, List<String> structs) throws IOException {
+    static List<Handle> generateHandles(String orig, Ifdef.Range ifdef, List<String> structs) throws IOException {
         // Forward declarations for structs
         StringBuilder forwardDeclarations = new StringBuilder(), declarations = new StringBuilder(), definitions = new StringBuilder();
         for (String s : structs) forwardDeclarations.append("\nstruct ").append(s).append(";");
@@ -634,6 +639,7 @@ public class Generate {
             String funcName = "vma" + name; // Original function name
             if (handle != namespaceHandle && name.equals("Destroy" + handle.name)) name = "destroy"; // E.g. Allocator::destroyAllocator -> Allocator::destroy
             String methodName = name.substring(0, 1).toLowerCase() + name.substring(1); // Generated method name
+            handle.methods.add(methodName);
 
             // Find dependencies of array sizes
             Integer[] arrayByLengthIndex = new Integer[params.size()];
@@ -876,6 +882,34 @@ public class Generate {
                 }
                 #endif
                 """, definitions.toString()));
+        return Stream.concat(Stream.of(namespaceHandle), handles.values().stream()).toList();
+    }
+
+    static void generateModule(List<String> enums, List<String> structs, List<Handle> handles) throws IOException {
+        Files.writeString(Path.of("src/vk_mem_alloc.cppm"), processTemplate("""
+                module;
+                #define VMA_IMPLEMENTATION
+                #include <vk_mem_alloc.hpp>
+                export module vk_mem_alloc_hpp;
+                export namespace VMA_HPP_NAMESPACE {
+                  using VMA_HPP_NAMESPACE::operator|;
+                  using VMA_HPP_NAMESPACE::operator&;
+                  using VMA_HPP_NAMESPACE::operator^;
+                  using VMA_HPP_NAMESPACE::operator~;
+                  using VMA_HPP_NAMESPACE::to_string;
+                  using VMA_HPP_NAMESPACE::functionsFromDispatcher;
+                $0
+                # ifndef VULKAN_HPP_NO_SMART_HANDLE
+                $1
+                  using VMA_HPP_NAMESPACE::UniqueBuffer;
+                  using VMA_HPP_NAMESPACE::UniqueImage;
+                # endif
+                }
+                """, Stream.concat(Stream.concat(enums.stream(), structs.stream()), handles.stream()
+                        .flatMap(h -> h.name == null ? h.methods.stream() : Stream.of(h.name)))
+                        .map(s -> "  using VMA_HPP_NAMESPACE::" + s + ";").collect(Collectors.joining("\n")),
+                handles.stream().skip(1).map(h -> "  using VMA_HPP_NAMESPACE::Unique" + h.name + ";")
+                        .collect(Collectors.joining("\n"))));
     }
 
     public static void main(String[] args) throws Exception {
@@ -890,9 +924,10 @@ public class Generate {
 
         Ifdef.Range ifdef = Ifdef.buildTree(orig, 2);
 
-        generateEnums(orig, ifdef);
+        List<String> enums = generateEnums(orig, ifdef);
         List<String> structs = generateStructs(orig, ifdef);
-        generateHandles(orig, ifdef, structs);
+        List<Handle> handles = generateHandles(orig, ifdef, structs);
+        generateModule(enums, structs, handles);
     }
 
 }
