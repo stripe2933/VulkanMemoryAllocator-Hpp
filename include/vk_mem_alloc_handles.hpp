@@ -195,15 +195,6 @@ namespace VMA_HPP_NAMESPACE {
   VULKAN_HPP_STATIC_ASSERT(sizeof(DefragmentationContext) == sizeof(VmaDefragmentationContext),
                            "handle and wrapper have different size!");
 }
-#ifndef VULKAN_HPP_NO_SMART_HANDLE
-namespace VULKAN_HPP_NAMESPACE {
-  template<> class UniqueHandleTraits<VMA_HPP_NAMESPACE::DefragmentationContext, VMA_HPP_NAMESPACE::Dispatcher> {
-    public:
-    using deleter = VMA_HPP_NAMESPACE::Deleter<VMA_HPP_NAMESPACE::DefragmentationContext, void>;
-  };
-}
-namespace VMA_HPP_NAMESPACE { using UniqueDefragmentationContext = VULKAN_HPP_NAMESPACE::UniqueHandle<DefragmentationContext, Dispatcher>; }
-#endif
 
 namespace VMA_HPP_NAMESPACE {
   class Allocator {

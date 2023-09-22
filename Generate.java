@@ -16,6 +16,8 @@ import java.util.stream.Stream;
  */
 public class Generate {
 
+    static Set<String> BLACKLISTED_UNIQUE_HANDLES = Set.of("DefragmentationContext"); // These handles will not have unique variants
+
     /**
      * Represents single sequence of #if - [#elif]... - [#else] - #endif statements.
      * It forms a tree structure which is used to check all active conditions at any point in source code.
@@ -155,7 +157,7 @@ public class Generate {
                                       String template, List<TemplateEntry<T>> entries, String... replacementStrings) {
         int lastIndex = 0;
         StringBuilder content = new StringBuilder();
-        ifdef = ifdef.goTo(content, sourcePosition);
+        if (ifdef != null) ifdef = ifdef.goTo(content, sourcePosition);
         Matcher loopMatcher = TemplateEntry.loopPattern.matcher(template);
         while (loopMatcher.find()) {
             content.append(template, lastIndex, loopMatcher.start());
@@ -195,16 +197,23 @@ public class Generate {
             String lastPart = entryTemplate.substring(li);
             entryTextParts.add(i -> lastPart);
             for (int i = 0; i < entries.size(); i++) {
-                ifdef = ifdef.goTo(content, entries.get(i).position);
+                if (ifdef != null) ifdef = ifdef.goTo(content, entries.get(i).position);
                 if (i != 0) content.append(indent);
                 for (var e : entryTextParts) content.append(e.apply(i));
             }
-            ifdef = ifdef.goTo(content, sourcePosition);
+            if (ifdef != null) ifdef = ifdef.goTo(content, sourcePosition);
             content.append("\n");
         }
         content.append(template.substring(lastIndex));
-        ifdef.goTo(content, -1);
+        if (ifdef != null) ifdef.goTo(content, -1);
         return processTemplate(content.toString(), replacementStrings);
+    }
+
+    /**
+     * Simplified version of {@link #processTemplate(Ifdef.Range, int, String, List, String...)}.
+     */
+    static <T> String processTemplate(String template, Stream<T> entries, String... replacementStrings) {
+        return processTemplate(null, 0, template, entries.map(e -> new TemplateEntry<>(e, 0)).toList(), replacementStrings);
     }
 
     static List<String> generateEnums(String orig, Ifdef.Range ifdef) throws IOException {
@@ -496,6 +505,10 @@ public class Generate {
             this.ifdef = ifdef;
         }
 
+        public String name() { return name; }
+
+        boolean hasUniqueVariant() { return !BLACKLISTED_UNIQUE_HANDLES.contains(name); }
+
         String getLowerName() {
             return name.substring(0, 1).toLowerCase() + name.substring(1);
         }
@@ -550,6 +563,7 @@ public class Generate {
                       VULKAN_HPP_STATIC_ASSERT(sizeof($0) == sizeof(Vma$0),
                                                "handle and wrapper have different size!");
                     }
+                    """ + (hasUniqueVariant() ? """
                     #ifndef VULKAN_HPP_NO_SMART_HANDLE
                     namespace VULKAN_HPP_NAMESPACE {
                       template<> class UniqueHandleTraits<VMA_HPP_NAMESPACE::$0, VMA_HPP_NAMESPACE::Dispatcher> {
@@ -559,7 +573,8 @@ public class Generate {
                     }
                     namespace VMA_HPP_NAMESPACE { using Unique$0 = VULKAN_HPP_NAMESPACE::UniqueHandle<$0, Dispatcher>; }
                     #endif
-                    """, name, getLowerName(), declarations.toString().indent(4),
+                    """ : ""),
+                    name, getLowerName(), declarations.toString().indent(4),
                     owner == null ? "void" : "VMA_HPP_NAMESPACE::" + owner.name);
         }
         String generateNamespace() {
@@ -589,8 +604,6 @@ public class Generate {
             throw new Error("Don't know how to deduce vector size: " + lenIfNotNull + " in " + funcName);
         }
     }
-
-    static Set<String> BLACKLISTED_UNIQUE_HANDLES = Set.of("DefragmentationContext"); // These handles will not have unique variants
 
     static List<Handle> generateHandles(String orig, Ifdef.Range ifdef, List<String> structs) throws IOException {
         // Forward declarations for structs
@@ -891,6 +904,7 @@ public class Generate {
                 #define VMA_IMPLEMENTATION
                 #include <vk_mem_alloc.hpp>
                 export module vk_mem_alloc_hpp;
+                
                 export namespace VMA_HPP_NAMESPACE {
                   using VMA_HPP_NAMESPACE::operator|;
                   using VMA_HPP_NAMESPACE::operator&;
@@ -898,18 +912,32 @@ public class Generate {
                   using VMA_HPP_NAMESPACE::operator~;
                   using VMA_HPP_NAMESPACE::to_string;
                   using VMA_HPP_NAMESPACE::functionsFromDispatcher;
-                $0
-                # ifndef VULKAN_HPP_NO_SMART_HANDLE
-                $1
+                  {{{using VMA_HPP_NAMESPACE::${toString};}}}
+                }
+                
+                """, Stream.concat(Stream.concat(enums.stream(), structs.stream()), handles.stream()
+                        .flatMap(h -> h.name == null ? h.methods.stream() : Stream.of(h.name)))) +
+                processTemplate("""
+                #ifndef VULKAN_HPP_NO_SMART_HANDLE
+                export namespace VMA_HPP_NAMESPACE {
                   using VMA_HPP_NAMESPACE::UniqueBuffer;
                   using VMA_HPP_NAMESPACE::UniqueImage;
-                # endif
+                  {{{using VMA_HPP_NAMESPACE::Unique${name};}}}
                 }
-                """, Stream.concat(Stream.concat(enums.stream(), structs.stream()), handles.stream()
-                        .flatMap(h -> h.name == null ? h.methods.stream() : Stream.of(h.name)))
-                        .map(s -> "  using VMA_HPP_NAMESPACE::" + s + ";").collect(Collectors.joining("\n")),
-                handles.stream().skip(1).map(h -> "  using VMA_HPP_NAMESPACE::Unique" + h.name + ";")
-                        .collect(Collectors.joining("\n"))));
+                #endif
+                
+                module : private;
+                
+                #ifndef VULKAN_HPP_NO_SMART_HANDLE
+                // Instantiate unique handle templates.
+                // This is a workaround for MSVC bugs, but wouldn't harm on other compilers anyway.
+                namespace VULKAN_HPP_NAMESPACE {
+                  template class UniqueHandle<Buffer, VMA_HPP_NAMESPACE::Dispatcher>;
+                  template class UniqueHandle<Image, VMA_HPP_NAMESPACE::Dispatcher>;
+                  {{{template class UniqueHandle<VMA_HPP_NAMESPACE::${name}, VMA_HPP_NAMESPACE::Dispatcher>;}}}
+                }
+                #endif
+                """, handles.stream().skip(1).filter(Handle::hasUniqueVariant)));
     }
 
     public static void main(String[] args) throws Exception {
