@@ -420,6 +420,18 @@ namespace VMA_HPP_NAMESPACE {
   }
 
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
+  VULKAN_HPP_INLINE AllocationInfo2 Allocator::getAllocationInfo2(Allocation allocation) const {
+    AllocationInfo2 allocationInfo;
+    vmaGetAllocationInfo2(m_allocator, static_cast<VmaAllocation>(allocation), reinterpret_cast<VmaAllocationInfo2*>(&allocationInfo));
+    return allocationInfo;
+  }
+#endif
+  VULKAN_HPP_INLINE void Allocator::getAllocationInfo2(Allocation allocation,
+                                                       AllocationInfo2* allocationInfo) const {
+    vmaGetAllocationInfo2(m_allocator, static_cast<VmaAllocation>(allocation), reinterpret_cast<VmaAllocationInfo2*>(allocationInfo));
+  }
+
+#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
   VULKAN_HPP_INLINE void Allocator::setAllocationUserData(Allocation allocation,
                                                           void* userData) const {
     vmaSetAllocationUserData(m_allocator, static_cast<VmaAllocation>(allocation), userData);
@@ -546,6 +558,57 @@ namespace VMA_HPP_NAMESPACE {
                                                                                   const VULKAN_HPP_NAMESPACE::DeviceSize* offsets,
                                                                                   const VULKAN_HPP_NAMESPACE::DeviceSize* sizes) const {
     VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaInvalidateAllocations(m_allocator, allocationCount, reinterpret_cast<const VmaAllocation*>(allocations), reinterpret_cast<const VkDeviceSize*>(offsets), reinterpret_cast<const VkDeviceSize*>(sizes)) );
+    return result;
+  }
+
+#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
+  VULKAN_HPP_INLINE typename VULKAN_HPP_NAMESPACE::ResultValueType<void>::type Allocator::copyMemoryToAllocation(const void* srcHostPointer,
+                                                                                                                 Allocation dstAllocation,
+                                                                                                                 VULKAN_HPP_NAMESPACE::DeviceSize dstAllocationLocalOffset,
+                                                                                                                 VULKAN_HPP_NAMESPACE::DeviceSize size) const {
+    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaCopyMemoryToAllocation(m_allocator, srcHostPointer, static_cast<VmaAllocation>(dstAllocation), static_cast<VkDeviceSize>(dstAllocationLocalOffset), static_cast<VkDeviceSize>(size)) );
+    resultCheck(result, VMA_HPP_NAMESPACE_STRING "::Allocator::copyMemoryToAllocation");
+    return createResultValueType(result);
+  }
+#else
+  VULKAN_HPP_INLINE VULKAN_HPP_NAMESPACE::Result Allocator::copyMemoryToAllocation(const void* srcHostPointer,
+                                                                                   Allocation dstAllocation,
+                                                                                   VULKAN_HPP_NAMESPACE::DeviceSize dstAllocationLocalOffset,
+                                                                                   VULKAN_HPP_NAMESPACE::DeviceSize size) const {
+    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaCopyMemoryToAllocation(m_allocator, srcHostPointer, static_cast<VmaAllocation>(dstAllocation), static_cast<VkDeviceSize>(dstAllocationLocalOffset), static_cast<VkDeviceSize>(size)) );
+    return result;
+  }
+#endif
+
+#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
+  template<typename VectorAllocator,
+           typename B,
+           typename std::enable_if<std::is_same<typename B::value_type, void>::value, int>::type>
+  VULKAN_HPP_INLINE typename VULKAN_HPP_NAMESPACE::ResultValueType<std::vector<void, VectorAllocator>>::type Allocator::copyAllocationToMemory(Allocation srcAllocation,
+                                                                                                                                               VULKAN_HPP_NAMESPACE::DeviceSize srcAllocationLocalOffset,
+                                                                                                                                               VULKAN_HPP_NAMESPACE::DeviceSize size,
+                                                                                                                                               VectorAllocator& vectorAllocator) const {
+    std::vector<void, VectorAllocator> dstHostPointer(size, vectorAllocator);
+    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaCopyAllocationToMemory(m_allocator, static_cast<VmaAllocation>(srcAllocation), static_cast<VkDeviceSize>(srcAllocationLocalOffset), &dstHostPointer, static_cast<VkDeviceSize>(size)) );
+    resultCheck(result, VMA_HPP_NAMESPACE_STRING "::Allocator::copyAllocationToMemory");
+    return createResultValueType(result, dstHostPointer);
+  }
+
+  template<typename VectorAllocator>
+  VULKAN_HPP_INLINE typename VULKAN_HPP_NAMESPACE::ResultValueType<std::vector<void, VectorAllocator>>::type Allocator::copyAllocationToMemory(Allocation srcAllocation,
+                                                                                                                                               VULKAN_HPP_NAMESPACE::DeviceSize srcAllocationLocalOffset,
+                                                                                                                                               VULKAN_HPP_NAMESPACE::DeviceSize size) const {
+    std::vector<void, VectorAllocator> dstHostPointer(size);
+    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaCopyAllocationToMemory(m_allocator, static_cast<VmaAllocation>(srcAllocation), static_cast<VkDeviceSize>(srcAllocationLocalOffset), &dstHostPointer, static_cast<VkDeviceSize>(size)) );
+    resultCheck(result, VMA_HPP_NAMESPACE_STRING "::Allocator::copyAllocationToMemory");
+    return createResultValueType(result, dstHostPointer);
+  }
+#endif
+  VULKAN_HPP_INLINE VULKAN_HPP_NAMESPACE::Result Allocator::copyAllocationToMemory(Allocation srcAllocation,
+                                                                                   VULKAN_HPP_NAMESPACE::DeviceSize srcAllocationLocalOffset,
+                                                                                   void* dstHostPointer,
+                                                                                   VULKAN_HPP_NAMESPACE::DeviceSize size) const {
+    VULKAN_HPP_NAMESPACE::Result result = static_cast<VULKAN_HPP_NAMESPACE::Result>( vmaCopyAllocationToMemory(m_allocator, static_cast<VmaAllocation>(srcAllocation), static_cast<VkDeviceSize>(srcAllocationLocalOffset), dstHostPointer, static_cast<VkDeviceSize>(size)) );
     return result;
   }
 

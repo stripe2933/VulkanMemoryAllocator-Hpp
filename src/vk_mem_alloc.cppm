@@ -35,6 +35,7 @@ export namespace VMA_HPP_NAMESPACE {
   using VMA_HPP_NAMESPACE::AllocationCreateInfo;
   using VMA_HPP_NAMESPACE::PoolCreateInfo;
   using VMA_HPP_NAMESPACE::AllocationInfo;
+  using VMA_HPP_NAMESPACE::AllocationInfo2;
   using VMA_HPP_NAMESPACE::DefragmentationInfo;
   using VMA_HPP_NAMESPACE::DefragmentationMove;
   using VMA_HPP_NAMESPACE::DefragmentationPassMoveInfo;
