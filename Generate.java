@@ -843,9 +843,9 @@ public class Generate {
                         }
                         if (ret.equals("void")) returnValue = "result";
                         else returnValue = "result, " + returnValue;
-                        s.append("\nresultCheck(result, VMA_HPP_NAMESPACE_STRING \"::");
+                        s.append("\nvk::detail::resultCheck(result, VMA_HPP_NAMESPACE_STRING \"::");
                         if (handle != namespaceHandle) s.append(handle.name).append("::");
-                        s.append(methodName).append("\");\nreturn createResultValueType(").append(returnValue).append(");");
+                        s.append(methodName).append("\");\nreturn vk::detail::createResultValueType(").append(returnValue).append(");");
                     } else if (!ret.equals("void")) s.append("\nreturn ").append(returnValue).append(";");
                     return processTemplate("""
                                 $0 {
