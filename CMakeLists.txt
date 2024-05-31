@@ -20,7 +20,7 @@ target_include_directories(VulkanMemoryAllocator-Hpp
 target_link_libraries(VulkanMemoryAllocator-Hpp
     INTERFACE
         Vulkan::Vulkan
-        VulkanMemoryAllocator::VulkanMemoryAllocator
+        GPUOpen::VulkanMemoryAllocator
 )
 
 install(
