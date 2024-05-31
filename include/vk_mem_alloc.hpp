@@ -5,7 +5,9 @@
 #include <vk_mem_alloc.h>
 #endif
 
+#ifndef VULKAN_MEMORY_ALLOCATOR_USE_MODULE
 #include <vulkan/vulkan.hpp>
+#endif
 
 #if !defined(VMA_HPP_NAMESPACE)
 #define VMA_HPP_NAMESPACE vma

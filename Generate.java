@@ -907,6 +907,10 @@ public class Generate {
                 #define VMA_IMPLEMENTATION
                 #include <vk_mem_alloc.hpp>
                 export module vk_mem_alloc_hpp;
+
+                #ifdef VULKAN_MEMORY_ALLOCATOR_HPP_USE_MODULE
+                export import vulkan_hpp;
+                #endif
                 
                 export namespace VMA_HPP_NAMESPACE {
                   using VMA_HPP_NAMESPACE::operator|;
