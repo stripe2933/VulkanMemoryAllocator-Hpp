@@ -1,4 +1,4 @@
-# VulkanMemoryAllocator-Hpp <!--VER-->3.1.0-development<!--/VER-->
+# VulkanMemoryAllocator-Hpp <!--VER-->3.1.0<!--/VER-->
 
 ### Supports Vulkan <!--VK-->1.3<!--/VK-->
 

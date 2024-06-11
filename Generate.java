@@ -672,7 +672,7 @@ public class Generate {
             List<Integer> outputs = new ArrayList<>(), defaultedOutputs = new ArrayList<>();
             for (int i = 0; i < params.size(); i++) {
                 Var v = params.get(i);
-                if (v.pointer && !v.constant) {
+                if (v.pointer && !v.constant && !v.originalType.equals("void*")) {
                     if (v.tag == VarTag.NOT_NULL) outputs.add(i);
                     else if (!v.primitive) {
                         defaultedOutputs.add(i);
@@ -843,9 +843,9 @@ public class Generate {
                         }
                         if (ret.equals("void")) returnValue = "result";
                         else returnValue = "result, " + returnValue;
-                        s.append("\nresultCheck(result, VMA_HPP_NAMESPACE_STRING \"::");
+                        s.append("\nVULKAN_HPP_NAMESPACE::detail::resultCheck(result, VMA_HPP_NAMESPACE_STRING \"::");
                         if (handle != namespaceHandle) s.append(handle.name).append("::");
-                        s.append(methodName).append("\");\nreturn createResultValueType(").append(returnValue).append(");");
+                        s.append(methodName).append("\");\nreturn VULKAN_HPP_NAMESPACE::detail::createResultValueType(").append(returnValue).append(");");
                     } else if (!ret.equals("void")) s.append("\nreturn ").append(returnValue).append(";");
                     return processTemplate("""
                                 $0 {
