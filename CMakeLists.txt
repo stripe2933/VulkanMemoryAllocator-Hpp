@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
 
 project(
     VulkanMemoryAllocator-Hpp
@@ -8,6 +9,11 @@ project(
 
 add_library(VulkanMemoryAllocator-Hpp INTERFACE)
 add_library(VulkanMemoryAllocator-Hpp::VulkanMemoryAllocator-Hpp ALIAS VulkanMemoryAllocator-Hpp)
+
+option(VMA_BUILD_CXX_MODULE OFF)
+if (${VMA_BUILD_CXX_MODULE})
+  add_subdirectory(CppModule)
+endif()
 
 target_include_directories(VulkanMemoryAllocator-Hpp INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 

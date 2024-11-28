@@ -843,9 +843,9 @@ public class Generate {
                         }
                         if (ret.equals("void")) returnValue = "result";
                         else returnValue = "result, " + returnValue;
-                        s.append("\nVULKAN_HPP_NAMESPACE::detail::resultCheck(result, VMA_HPP_NAMESPACE_STRING \"::");
+                        s.append("\nVMA_HPP_NAMESPACE::detail::resultCheck(result, VMA_HPP_NAMESPACE_STRING \"::");
                         if (handle != namespaceHandle) s.append(handle.name).append("::");
-                        s.append(methodName).append("\");\nreturn VULKAN_HPP_NAMESPACE::detail::createResultValueType(").append(returnValue).append(");");
+                        s.append(methodName).append("\");\nreturn VMA_HPP_NAMESPACE::detail::createResultValueType(").append(returnValue).append(");");
                     } else if (!ret.equals("void")) s.append("\nreturn ").append(returnValue).append(";");
                     return processTemplate("""
                                 $0 {
@@ -904,10 +904,18 @@ public class Generate {
     static void generateModule(List<String> enums, List<String> structs, List<Handle> handles) throws IOException {
         Files.writeString(Path.of("src/vk_mem_alloc.cppm"), processTemplate("""
                 module;
+
+                #if defined( __cpp_lib_modules )
+                #define VMA_ENABLE_STD_MODULE
+                #endif
+
                 #define VMA_IMPLEMENTATION
-                #include <vk_mem_alloc.hpp>
+                #include <vk_mem_alloc.h>
+
+                #include "vk_mem_alloc.hpp"
+
                 export module vk_mem_alloc_hpp;
-                
+
                 export namespace VMA_HPP_NAMESPACE {
                   using VMA_HPP_NAMESPACE::operator|;
                   using VMA_HPP_NAMESPACE::operator&;
@@ -917,12 +925,14 @@ public class Generate {
                   using VMA_HPP_NAMESPACE::functionsFromDispatcher;
                   {{{using VMA_HPP_NAMESPACE::${toString};}}}
                 }
-                
+
                 """, Stream.concat(Stream.concat(enums.stream(), structs.stream()), handles.stream()
                         .flatMap(h -> h.name == null ? h.methods.stream() : Stream.of(h.name)))) +
                 processTemplate("""
                 #ifndef VULKAN_HPP_NO_SMART_HANDLE
                 export namespace VMA_HPP_NAMESPACE {
+                  using VMA_HPP_NAMESPACE::createAllocatorUnique;
+                  using VMA_HPP_NAMESPACE::createVirtualBlockUnique;
                   using VMA_HPP_NAMESPACE::UniqueBuffer;
                   using VMA_HPP_NAMESPACE::UniqueImage;
                   {{{using VMA_HPP_NAMESPACE::Unique${name};}}}
@@ -930,9 +940,9 @@ public class Generate {
                   using VMA_HPP_NAMESPACE::createVirtualBlockUnique;
                 }
                 #endif
-                
+
                 module : private;
-                
+
                 #ifndef VULKAN_HPP_NO_SMART_HANDLE
                 // Instantiate unique handle templates.
                 // This is a workaround for MSVC bugs, but wouldn't harm on other compilers anyway.
