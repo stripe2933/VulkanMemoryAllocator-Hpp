@@ -247,13 +247,13 @@ public class Generate {
             }
 
             content.append(processTemplate(ifdef, typedefMatcher.start(), """
-                    
+
                     namespace VMA_HPP_NAMESPACE {
-                    
+
                       enum class $0$1 {
                         {{{e${name} = ${originalName}${,$}}}}
                       };
-                    
+
                     # if !defined( VULKAN_HPP_NO_TO_STRING )
                       VULKAN_HPP_INLINE std::string to_string($0 value) {
                         {{{if (value == $0::e${name}) return "${name}";}}}
@@ -264,7 +264,7 @@ public class Generate {
                     """, entries, name, flagBits ? (" : Vma" + flags) : ""));
             if (flagBits) {
                 content.append(processTemplate(ifdef, typedefMatcher.start(), """
-                        
+
                         namespace VULKAN_HPP_NAMESPACE {
                           template<> struct FlagTraits<VMA_HPP_NAMESPACE::$0> {
                             static VULKAN_HPP_CONST_OR_CONSTEXPR bool isBitmask = true;
@@ -272,27 +272,27 @@ public class Generate {
                               {{{${ ^|} VMA_HPP_NAMESPACE::$0::e${name}${$;}}}}
                           };
                         }
-                        
+
                         namespace VMA_HPP_NAMESPACE {
-                        
+
                           using $1 = VULKAN_HPP_NAMESPACE::Flags<$0>;
-                        
+
                           VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator|($0 bit0, $0 bit1) VULKAN_HPP_NOEXCEPT {
                             return $1(bit0) | bit1;
                           }
-                        
+
                           VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator&($0 bit0, $0 bit1) VULKAN_HPP_NOEXCEPT {
                             return $1(bit0) & bit1;
                           }
-                        
+
                           VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator^($0 bit0, $0 bit1) VULKAN_HPP_NOEXCEPT {
                             return $1(bit0) ^ bit1;
                           }
-                        
+
                           VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator~($0 bits) VULKAN_HPP_NOEXCEPT {
                             return ~($1(bits));
                           }
-                        
+
                         # if !defined( VULKAN_HPP_NO_TO_STRING )
                           VULKAN_HPP_INLINE std::string to_string($1 value) {
                             if (!value) return "{}";
@@ -309,7 +309,7 @@ public class Generate {
                 #ifndef VULKAN_MEMORY_ALLOCATOR_ENUMS_HPP
                 #define VULKAN_MEMORY_ALLOCATOR_ENUMS_HPP
                 $0
-                
+
                 #endif
                 """, content.toString()));
         return enums;
@@ -420,35 +420,35 @@ public class Generate {
                 fields.add(new TemplateEntry<>(Var.parse(memberMatcher),  typedefMatcher.end() + memberMatcher.start()));
             }
             content.append(processTemplate(ifdef, typedefMatcher.start(), """
-                    
+
                     struct $0 {
                       using NativeType = Vma$0;
-                    
+
                     #if !defined( VULKAN_HPP_NO_STRUCT_CONSTRUCTORS )
                       VULKAN_HPP_CONSTEXPR $0(
                           {{{${ ^,} ${type} ${name}_ = {}}}}
                         ) VULKAN_HPP_NOEXCEPT
                         {{{${:^,} ${name}(${name}_)}}}
                         {}
-                    
+
                       VULKAN_HPP_CONSTEXPR $0($0 const &) VULKAN_HPP_NOEXCEPT = default;
                       $0(Vma$0 const & rhs) VULKAN_HPP_NOEXCEPT : $0(*reinterpret_cast<$0 const *>(&rhs)) {}
                     #endif
-                    
+
                       $0& operator=($0 const &) VULKAN_HPP_NOEXCEPT = default;
                       $0& operator=(Vma$0 const & rhs) VULKAN_HPP_NOEXCEPT {
                         *this = *reinterpret_cast<VMA_HPP_NAMESPACE::$0 const *>(&rhs);
                         return *this;
                       }
-                      
+
                       explicit operator Vma$0 const &() const VULKAN_HPP_NOEXCEPT {
                         return *reinterpret_cast<const Vma$0 *>(this);
                       }
-                      
+
                       explicit operator Vma$0&() VULKAN_HPP_NOEXCEPT {
                         return *reinterpret_cast<Vma$0 *>(this);
                       }
-                      
+
                     #if defined( VULKAN_HPP_HAS_SPACESHIP_OPERATOR )
                       bool operator==($0 const &) const = default;
                     #else
@@ -457,7 +457,7 @@ public class Generate {
                         ;
                       }
                     #endif
-                    
+
                     #if !defined( VULKAN_HPP_NO_STRUCT_SETTERS )
                     {{{
                       VULKAN_HPP_CONSTEXPR_14 $0& set${capitalName}(${type} ${name}_) VULKAN_HPP_NOEXCEPT {
@@ -465,7 +465,7 @@ public class Generate {
                         return *this;
                       }}}}
                     #endif
-                    
+
                     public:
                       {{{${type} ${name} = {};}}}
                     };
@@ -527,19 +527,19 @@ public class Generate {
                         VULKAN_HPP_CONSTEXPR         $0() = default;
                         VULKAN_HPP_CONSTEXPR         $0(std::nullptr_t) VULKAN_HPP_NOEXCEPT {}
                         VULKAN_HPP_TYPESAFE_EXPLICIT $0(Vma$0 $1) VULKAN_HPP_NOEXCEPT : m_$1($1) {}
-                      
+
                       #if defined(VULKAN_HPP_TYPESAFE_CONVERSION)
                         $0& operator=(Vma$0 $1) VULKAN_HPP_NOEXCEPT {
                           m_$1 = $1;
                           return *this;
                         }
                       #endif
-                      
+
                         $0& operator=(std::nullptr_t) VULKAN_HPP_NOEXCEPT {
                           m_$1 = {};
                           return *this;
                         }
-                      
+
                       #if defined( VULKAN_HPP_HAS_SPACESHIP_OPERATOR )
                         auto operator<=>($0 const &) const = default;
                       #else
@@ -547,15 +547,15 @@ public class Generate {
                           return m_$1 == rhs.m_$1;
                         }
                       #endif
-                      
+
                         VULKAN_HPP_TYPESAFE_EXPLICIT operator Vma$0() const VULKAN_HPP_NOEXCEPT {
                           return m_$1;
                         }
-                      
+
                         explicit operator bool() const VULKAN_HPP_NOEXCEPT {
                           return m_$1 != VK_NULL_HANDLE;
                         }
-                      
+
                         bool operator!() const VULKAN_HPP_NOEXCEPT {
                           return m_$1 == VK_NULL_HANDLE;
                         }
@@ -880,7 +880,7 @@ public class Generate {
         Files.writeString(Path.of("include/vk_mem_alloc_handles.hpp"), processTemplate("""
                 #ifndef VULKAN_MEMORY_ALLOCATOR_HANDLES_HPP
                 #define VULKAN_MEMORY_ALLOCATOR_HANDLES_HPP
-                
+
                 namespace VMA_HPP_NAMESPACE {
                   $0
                 }
@@ -947,7 +947,9 @@ public class Generate {
                 }
                 #endif
 
+                #if !defined(__GNUC__) || defined(__clang__)
                 module : private;
+                #endif
 
                 #ifndef VULKAN_HPP_NO_SMART_HANDLE
                 // Instantiate unique handle templates.

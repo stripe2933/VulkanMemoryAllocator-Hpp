@@ -8,7 +8,7 @@
 #include <vulkan/vulkan_hpp_macros.hpp>
 
 #ifdef VMA_ENABLE_STD_MODULE
-import VULKAN_HPP_STD_MODULE;
+import std;
 #else
 #include <algorithm>
 #include <array>
