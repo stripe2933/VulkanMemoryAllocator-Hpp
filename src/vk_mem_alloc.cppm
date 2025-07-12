@@ -51,6 +51,7 @@ export namespace VMA_HPP_NAMESPACE {
   using VMA_HPP_NAMESPACE::VirtualBlockCreateInfo;
   using VMA_HPP_NAMESPACE::VirtualAllocationCreateInfo;
   using VMA_HPP_NAMESPACE::VirtualAllocationInfo;
+  using VMA_HPP_NAMESPACE::importVulkanFunctionsFromVolk;
   using VMA_HPP_NAMESPACE::createAllocator;
   using VMA_HPP_NAMESPACE::createVirtualBlock;
   using VMA_HPP_NAMESPACE::Allocator;
@@ -83,7 +84,9 @@ export namespace VMA_HPP_NAMESPACE {
 }
 #endif
 
+#if !defined(__GNUC__) || defined(__clang__)
 module : private;
+#endif
 
 #ifndef VULKAN_HPP_NO_SMART_HANDLE
 // Instantiate unique handle templates.
